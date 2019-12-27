@@ -1,4 +1,7 @@
-#!/usr/bin/env bash
+#!/bin/bash
+
+# set -x
+# set -e
 
 # check to see where the script is being run from and set local variables
 if [ -f .env ]; then

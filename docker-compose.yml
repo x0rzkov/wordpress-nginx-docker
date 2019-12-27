@@ -1,54 +1,160 @@
-version: '3.6'
+---
+version: "3.7"
 services:
 
-  wordpress:
-    image: wordpress:${WORDPRESS_VERSION:-php7.3-fpm}
-    container_name: wordpress
+  nginx:
+    image: nginx:${NGINX_VERSION:-latest}
+    container_name: ${NAMESPACE}_nginx
+    ports:
+    - "8080:80"
+    - "443:443"
+    networks:
+    - web
+    - internal
+    links:
+    - wordpress:wordpress
+    - adminer:adminer
+    - phpmyadmin:phpmyadmin
     volumes:
-      - ./config/php.conf.ini:/usr/local/etc/php/conf.d/conf.ini
-      - ./wordpress:/var/www/html
-    environment:
-      - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME:-wordpress}
-      - WORDPRESS_TABLE_PREFIX=${WORDPRESS_TABLE_PREFIX:-wp_}
-      - WORDPRESS_DB_HOST=${WORDPRESS_DB_HOST:-mysql}
-      - WORDPRESS_DB_USER=${WORDPRESS_DB_USER:-root}
-      - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD:-password}
+    - ${NGINX_CONF_DIR:-./nginx}:/etc/nginx/conf.d
+    - ${NGINX_LOG_DIR:-./logs/nginx}:/var/log/nginx
+    - ${WORDPRESS_DATA_DIR:-./wordpress}:/var/www/html
+    - ${SSL_CERTS_DIR:-./certs}:/etc/letsencrypt
+    - ${SSL_CERTS_DATA_DIR:-./certs-data}:/data/letsencrypt
     depends_on:
-      - mysql
+    - wordpress
+    - phpmyadmin
+    - adminer
+    restart: always
+
+  wordpress:
+    # image: wordpress:${WORDPRESS_VERSION:-php7.3-fpm}
+    build: .docker/wordpress
+    image: x0rzkov/wordpress:latest
+    container_name: ${NAMESPACE}_wordpress
+    networks:
+    - web
+    - internal
+    volumes:
+    - ./config/php.conf.ini:/usr/local/etc/php/conf.d/conf.ini
+    - ./wordpress:/var/www/html
+    environment:
+    - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME:-wordpress}
+    - WORDPRESS_TABLE_PREFIX=${WORDPRESS_TABLE_PREFIX:-wp_}
+    - WORDPRESS_DB_HOST=${WORDPRESS_DB_HOST:-mysql}
+    - WORDPRESS_DB_USER=${WORDPRESS_DB_USER:-root}
+    - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD:-password}
+    depends_on:
+    - mysql
     restart: always
 
   mysql:
     image: mariadb:${MARIADB_VERSION:-latest}
-    container_name: mysql
+    container_name: ${NAMESPACE}_mysql
+    networks:
+    - internal
+    - web
+    ports :
+    - "3306:3306"
     volumes:
-      - ./mysql:/var/lib/mysql
+    - db-data:/var/lib/mysql
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-password}
-      - MYSQL_USER=${MYSQL_USER:-root}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-password}
-      - MYSQL_DATABASE=${MYSQL_DATABASE:-wordpress}
+    - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-password}
+    - MYSQL_USER=${MYSQL_USER:-root}
+    - MYSQL_PASSWORD=${MYSQL_PASSWORD:-password}
+    - MYSQL_DATABASE=${MYSQL_DATABASE:-wordpress}
     restart: always
 
-  nginx:
-    image: nginx:${NGINX_VERSION:-latest}
-    container_name: nginx
-    ports:
-      - '80:80'
-      - '443:443'
-    volumes:
-      - ${NGINX_CONF_DIR:-./nginx}:/etc/nginx/conf.d
-      - ${NGINX_LOG_DIR:-./logs/nginx}:/var/log/nginx
-      - ${WORDPRESS_DATA_DIR:-./wordpress}:/var/www/html
-      - ${SSL_CERTS_DIR:-./certs}:/etc/letsencrypt
-      - ${SSL_CERTS_DATA_DIR:-./certs-data}:/data/letsencrypt
-    depends_on:
-      - wordpress
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:5-fpm-alpine
+    container_name: ${NAMESPACE}_pma
     restart: always
+    ports :
+    - "8082:80"
+    links:
+    - mysql:db
+    networks:
+    - internal
+    - web
+    environment:
+    - PMA_ARBITRARY=1
+    - PMA_PORT=3306
+    - PMA_HOSTS=mysql
+    - UPLOAD_LIMIT=65536536
+    - MYSQL_ROOT_PASSWORD=password
+    - PMA_USER=wordpress
+    - PMA_PASSWORD=password
+
+  backup:
+    image: zeenlym/mariadb-backup
+    container_name: ${NAMESPACE}_backup
+    depends_on:
+    - mysql
+    restart: unless-stopped
+    networks:
+    - internal
+    labels:
+    - "traefik.enable=false"
+    environment:
+    - TIMEZONE=${TIME_ZONE}
+    - SCHEDULE=0 0 3 * *
+    - BACKUP_METHOD=mysqldump
+    - MYSQL_HOST=mysql
+    - MYSQL_DATABASE=${WORDPRESS_DB_NAME}
+    - MYSQL_USER=${WORDPRESS_DB_USER}
+    - MYSQL_PASSWORD=${WORDPRESS_DB_PASSWORD}
+    volumes:
+    - ./backup:/backup
 
   adminer:
     image: adminer
+    container_name: ${NAMESPACE}_adminer
     restart: always
+    networks:
+    - internal
+    - web
     links:
-      - mysql
+    - mysql
     ports:
-      - 8080:8080
+    - 8081:8080
+
+  memcached:
+    image: memcached
+    container_name: ${NAMESPACE}_memcached 
+    restart: always
+    ports:
+    - "11211:11211"
+    networks:
+    - internal
+
+  varnish:
+    image: million12/varnish
+    container_name: ${NAMESPACE}_varnish 
+    restart: always
+    environment:
+      CACHE_SIZE: 64m
+    links:
+    - nginx
+    volumes:
+    - ./varnish/default.vcl:/etc/varnish/default.vcl
+    ports:
+    - "80:80"
+    # - "443:443"
+    networks:
+    - internal
+
+networks:
+  internal:
+  web:
+    external: true
+
+volumes:
+  db-data:
+  letsencrypt_certs:
+  letsencrypt_www:
+  elastic_data:
+  app_data:
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/www

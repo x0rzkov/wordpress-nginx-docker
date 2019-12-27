@@ -6,5 +6,8 @@ logs/
 nginx/
 mysql/
 wordpress/
+wordpress.default/
 !.env_example
 !nginx/default*
+*.zip
+wp-config.php
