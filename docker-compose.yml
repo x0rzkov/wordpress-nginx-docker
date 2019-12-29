@@ -25,19 +25,15 @@ services:
     - ${WORDPRESS_DATA_DIR:-./wordpress}:/var/www/html
     - ${SSL_CERTS_DIR:-./certs}:/etc/letsencrypt
     - ${SSL_CERTS_DATA_DIR:-./certs-data}:/data/letsencrypt
-    depends_on:
-    - wordpress
-    - phpmyadmin
-    - adminer
+    - .htpasswd:/etc/nginx/htpasswd
     restart: always
 
   wordpress:
-    # image: wordpress:${WORDPRESS_VERSION:-php7.3-fpm}
     build: .docker/wordpress
-    image: x0rzkov/wordpress:latest
+    # build: .docker/wordpress-fpm-alpine
+    image: eedama2/wordpress:latest
     container_name: ${NAMESPACE}_wordpress
     networks:
-    - web
     - internal
     volumes:
     - ./config/php.conf.ini:/usr/local/etc/php/conf.d/conf.ini
@@ -50,7 +46,10 @@ services:
     - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD:-password}
     depends_on:
     - mysql
-    - elasticsearch
+    links:
+    - memcached:memcached
+    - elasticsearch:elasticsearch
+    # - varnish:varnish
     restart: always
 
   mysql:
@@ -147,20 +146,21 @@ services:
     - 8081:8080
 
   memcached:
-    image: memcached
+    image: memcached:alpine
     container_name: ${NAMESPACE}_memcached 
     restart: always
     ports:
     - "11211:11211"
     networks:
     - internal
+    - web
 
   varnish:
     image: million12/varnish
     container_name: ${NAMESPACE}_varnish 
     restart: always
     environment:
-      CACHE_SIZE: 64m
+      CACHE_SIZE: 128m
     links:
     - nginx
     volumes:
@@ -170,6 +170,7 @@ services:
     # - "443:443"
     networks:
     - internal
+    - web
 
   redis:
     image: redis:5-alpine
@@ -179,6 +180,7 @@ services:
     - "6379:6379"
     networks:
     - internal    
+    - web
 
   portainer:
     image: portainer/portainer
@@ -215,7 +217,7 @@ services:
     - transport.host=127.0.0.1
     ports:
     - '9200:9200'
-    - '9300:9300'
+    # - '9300:9300'
     - '8086:8086'
     ulimits:
       memlock:

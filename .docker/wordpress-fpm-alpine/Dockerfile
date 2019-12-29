@@ -9,6 +9,8 @@ RUN apk add --no-cache \
 # Ghostscript is required for rendering PDF previews
 		ghostscript
 
+ENV PHP_MEMCACHED_VERSION 5.3.2
+
 # install the PHP extensions we need (https://make.wordpress.org/hosting/handbook/handbook/server-environment/#php-extensions)
 RUN set -ex; \
 	\
@@ -19,12 +21,23 @@ RUN set -ex; \
 		libjpeg-turbo-dev \
 		libpng-dev \
 		libzip-dev \
+		bzip2-dev \
+		icu-dev \
+		libxml2-dev \
 	; \
 	\
 	docker-php-ext-configure gd --with-freetype-dir=/usr --with-jpeg-dir=/usr --with-png-dir=/usr; \
 	docker-php-ext-install -j "$(nproc)" \
 		bcmath \
 		exif \
+		bz2 \
+		calendar \
+		iconv \
+		mbstring \
+		mysqli \
+		pdo_mysql \
+		intl \
+		soap \
 		gd \
 		mysqli \
 		opcache \
@@ -39,6 +52,23 @@ RUN set -ex; \
 			| sort -u \
 			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
 	)"; \
+	\
+	pecl install redis ; \
+	docker-php-ext-enable redis.so ; \
+	curl -L -o /tmp/memcached.tar.gz "https://github.com/php-memcached-dev/php-memcached/archive/v${PHP_MEMCACHED_VERSION}.tar.gz" && \
+	mkdir -p memcached && \
+	tar -C memcached -zxvf /tmp/memcached.tar.gz --strip 1 && \
+	( \
+	    cd memcached && \
+	    phpize && \
+	    ./configure && \
+	    make -j$(nproc) && \
+	    make install \
+	) && \
+	rm -r memcached && \
+	rm /tmp/memcached.tar.gz && \
+	docker-php-ext-enable memcached && \
+	\
 	apk add --virtual .wordpress-phpexts-rundeps $runDeps; \
 	apk del .build-deps
 
@@ -80,6 +110,20 @@ RUN set -ex; \
 	chown -R www-data:www-data /usr/src/wordpress
 
 COPY docker-entrypoint.sh /usr/local/bin/
+
+# Install Composer.
+ENV COMPOSER_HOME /root/composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+ENV PATH $COMPOSER_HOME/vendor/bin:$PATH
+
+# Install WP-CLI
+WORKDIR /var/www/html
+RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
+    chmod +x wp-cli.phar && \
+    mv wp-cli.phar /usr/local/bin/wp && \
+    echo 'wp() { /usr/local/bin/wp "$@" --allow-root; }' >> ~/.bashrc
+
+RUN echo 'sendmail_path = "/usr/bin/msmtp -t"' > /usr/local/etc/php/conf.d/sendmail.ini
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["php-fpm"]

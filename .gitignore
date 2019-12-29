@@ -12,3 +12,4 @@ wordpress.default/
 *.zip
 wp-config.php
 backup/*
+.htpasswd
