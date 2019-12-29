@@ -2,6 +2,10 @@
 version: "3.7"
 services:
 
+  # refs.
+  # - https://github.com/yobasystems/alpine-php-wordpress
+  # - 
+
   nginx:
     image: nginx:${NGINX_VERSION:-latest}
     container_name: ${NAMESPACE}_nginx
@@ -46,6 +50,7 @@ services:
     - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD:-password}
     depends_on:
     - mysql
+    - elasticsearch
     restart: always
 
   mysql:
@@ -177,22 +182,50 @@ services:
 
   portainer:
     image: portainer/portainer
-    container_name: "${PROJECT_NAME}_portainer"
+    container_name: "${NAMESPACE}_portainer"
     command: --no-auth -H unix:///var/run/docker.sock
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock
     labels:
-    - "traefik.http.routers.${PROJECT_NAME}_portainer.rule=Host(`portainer.${PROJECT_BASE_URL}`)"
+    - "traefik.http.routers.${NAMESPACE}_portainer.rule=Host(`portainer.${PROJECT_BASE_URL}`)"
 
   traefik:
     image: traefik:v2.0
-    container_name: "${PROJECT_NAME}_traefik"
+    container_name: "${NAMESPACE}_traefik"
     command: --api.insecure=true --providers.docker
     ports:
     - '8000:80'
     #- '8080:8080' # Dashboard
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock
+
+  elasticsearch:
+    build:
+      context: ./.docker/elasticsearch
+      args:
+        TZ: ${TIME_ZONE}
+        CEREBRO_VERSION: ${CEREBRO_VERSION}
+    container_name: ${NAMESPACE}_elasticsearch
+    image: ${NAMESPACE}/elasticsearch:7.5.0
+    environment:
+    - bootstrap.memory_lock=true
+    - xpack.security.enabled=false
+    - ES_JAVA_OPTS=-Xms1024m -Xmx1024m
+    - http.host=0.0.0.0
+    - transport.host=127.0.0.1
+    ports:
+    - '9200:9200'
+    - '9300:9300'
+    - '8086:8086'
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+    - elastic_data:/usr/share/elasticsearch/data
+    networks:
+    - internal
+    - web
 
 networks:
   internal:

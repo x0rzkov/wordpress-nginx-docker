@@ -11,3 +11,4 @@ wordpress.default/
 !nginx/default*
 *.zip
 wp-config.php
+backup/*
