@@ -108,7 +108,7 @@ services:
     - MYSQL_USER=${WORDPRESS_DB_USER}
     - MYSQL_PASSWORD=${WORDPRESS_DB_PASSWORD}
     volumes:
-    - ./backup:/backup
+    - ${MYSQL_BACKUP_DIR}:/backup
 
   traefik:
     image: traefik:latest
