@@ -36,7 +36,7 @@ services:
     networks:
     - internal
     volumes:
-    - ./config/php.conf.ini:/usr/local/etc/php/conf.d/conf.ini
+    - ./.config/php/conf.ini:/usr/local/etc/php/conf.d/conf.ini
     - ./shared/www:/var/www/html
     environment:
     - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME:-wordpress}
@@ -198,7 +198,7 @@ services:
     command: --api.insecure=true --providers.docker
     ports:
     - '8000:80'
-    #- '8080:8080' # Dashboard
+    - '8085:8080' # Dashboard
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock
 
@@ -218,7 +218,6 @@ services:
     - transport.host=127.0.0.1
     ports:
     - '9200:9200'
-    # - '9300:9300'
     - '8086:8086'
     ulimits:
       memlock:

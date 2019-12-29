@@ -3,8 +3,8 @@ options:
   verbose: true
 syncs:
   app_data:
-    src: ${PWD}/wordpress
-    sync_strategy: 'unison'
+    src: ${PWD}/shared/www
+    sync_strategy: 'native_osx'
     sync_userid: 1000
     sync_groupid: 1000
     sync_args:
