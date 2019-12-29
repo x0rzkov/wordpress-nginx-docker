@@ -13,3 +13,4 @@ wordpress.default/
 wp-config.php
 backup/*
 .htpasswd
+shared/www

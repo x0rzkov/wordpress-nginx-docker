@@ -37,7 +37,7 @@ services:
     - internal
     volumes:
     - ./config/php.conf.ini:/usr/local/etc/php/conf.d/conf.ini
-    - ./wordpress:/var/www/html
+    - ./shared/www:/var/www/html
     environment:
     - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME:-wordpress}
     - WORDPRESS_TABLE_PREFIX=${WORDPRESS_TABLE_PREFIX:-wp_}
@@ -46,10 +46,11 @@ services:
     - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD:-password}
     depends_on:
     - mysql
+    - memcached
+    - elasticsearch
     links:
     - memcached:memcached
     - elasticsearch:elasticsearch
-    # - varnish:varnish
     restart: always
 
   mysql:
@@ -121,8 +122,8 @@ services:
     - "8085:8080"
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock
-    - ./traefik.toml:/traefik.toml
-    - ./acme.json:/acme.json
+    - ${TRAFIK_CONFIG_DIR}/traefik.toml:/traefik.toml
+    - ${TRAFIK_CONFIG_DIR}/acme.json:/acme.json
 
   mailhog:
     container_name: ${NAMESPACE}_mailhog
@@ -164,7 +165,7 @@ services:
     links:
     - nginx
     volumes:
-    - ./varnish/default.vcl:/etc/varnish/default.vcl
+    - ./.config/varnish/default.vcl:/etc/varnish/default.vcl
     ports:
     - "80:80"
     # - "443:443"
