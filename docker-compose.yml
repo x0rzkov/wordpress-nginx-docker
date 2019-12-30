@@ -15,6 +15,7 @@ services:
     networks:
     - web
     - internal
+    - proxy-tier
     links:
     - wordpress:wordpress
     - adminer:adminer
@@ -198,6 +199,38 @@ services:
       MIN_PORT: 21000
       MAX_PORT: 21010
 
+  unbound-app:
+    container_name: unbound-app
+    restart: always
+    image: tiredofit/unbound
+    ports:
+    - 53:53
+    environment:
+    - ZABBIX_HOSTNAME=unbound-hostname-app
+    - DO_IPV6=yes
+    - DO_IPV4=yes
+    - DO_UDP=yes
+    - DO_TCP=yes
+    - VERBOSITY=0
+    - NUM_THREADS=1
+    - SO_RCVBUFF=0
+    - SO_SNDBUF=0
+    - SO_REUSEPORT=no
+    - EDNS_BUFFER_SIZE=4096
+    - MSG_CACHE_SIZE=4m
+    - RRSET_CACHE_SIZE=4m
+    - CACHE_MIN_TTL=0
+    - CACHE_MAX_TTL=86400
+    - CACHE_MAX_NEGATIVE_TTL=3600
+    - HIDE_IDENTITY=no
+    - HIDE_VERSION=no
+    - STATISTICS_INTERVAL=0
+    - STATISTICS_CUMULATIVE=no
+    - EXTENDED_STATISTICS=no
+    networks:
+    - proxy-tier
+    restart: always
+
   # sftp:
   #   image: atmoz/sftp:alpine
   #   ports:
@@ -271,6 +304,9 @@ networks:
   internal:
   web:
     external: true
+  proxy-tier:
+    external:
+      name: nginx-proxy
 
 volumes:
   db-data:
