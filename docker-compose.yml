@@ -184,6 +184,17 @@ services:
     - internal    
     - web
 
+  # tests:
+  #  image: tests:alpine3.11
+  #  build: tests
+  #  container_name: ${NAMESPACE}_tests 
+  #  depends_on:
+  #  - redis
+  #  - memcached
+  #  networks:
+  #  - internal    
+  #  - web
+
   portainer:
     image: portainer/portainer
     container_name: "${NAMESPACE}_portainer"
