@@ -25,7 +25,7 @@ services:
     - ${WORDPRESS_DATA_DIR:-./wordpress}:/var/www/html
     - ${SSL_CERTS_DIR:-./certs}:/etc/letsencrypt
     - ${SSL_CERTS_DATA_DIR:-./certs-data}:/data/letsencrypt
-    - .htpasswd:/etc/nginx/htpasswd
+    - .htpasswd:/etc/nginx/htpasswd/.htpasswd
     restart: always
 
   wordpress:
