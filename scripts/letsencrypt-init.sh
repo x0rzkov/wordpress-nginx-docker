@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# set -x
+set -x
 # set -e
 
 # check to see where the script is being run from and set local variables
 if [ -f .env ]; then
   echo "INFO: running from top level of repository"
   source .env
-  LE_DIR=$(pwd)/letsencrypt
+  LE_DIR=$(pwd)/scripts
 else
   if [ ! -f ../.env ]; then
     echo "ERROR: Could not find the .env file?"
@@ -19,6 +19,11 @@ else
   cd ../
 fi
 REPO_DIR=$(dirname ${LE_DIR})
+
+echo ""
+echo "LE_DIR: ${LE_DIR}"
+echo "REPO_DIR: ${REPO_DIR}"
+echo ""
 
 # get full directory path
 if [ $(dirname ${SSL_CERTS_DIR}) = '.' ]; then
@@ -34,7 +39,7 @@ fi
 
 # Nginx config file for using Let's Encrypt
 _lets_encrypt_conf () {
-  local OUTFILE=lets_encrypt.conf
+  local OUTFILE=${LE_DIR}/lets_encrypt.conf
   cat > $OUTFILE <<EOF
 server {
     listen      80;
@@ -51,6 +56,8 @@ server {
     }
 }
 EOF
+ls -l
+pwd
 }
 
 # FQDN_OR_IP should not include prefix of www.
@@ -78,32 +85,39 @@ cd ${REPO_DIR}
 docker-compose build
 
 # rename default.conf temporarily
-if [ -e ${REPO_DIR}/nginx/default.conf ]; then
-  mv ${REPO_DIR}/nginx/default.conf ${REPO_DIR}/nginx/default.conf.waitforletsencrypt
+if [ -e ${REPO_DIR}/.config/nginx/default.conf ]; then
+  mv ${REPO_DIR}/.config/nginx/default.conf ${REPO_DIR}/.config/nginx/default.conf.waitforletsencrypt
 fi
 
 docker-compose up -d
 sleep 5s
-docker cp ${LE_DIR}/lets_encrypt.conf nginx:/etc/nginx/conf.d/lets_encrypt.conf
-docker exec nginx /usr/sbin/nginx -s reload
+NGINX_CONTAINER=$(docker ps --filter="name=nginx" --format "{{.ID}}")
+docker cp ${LE_DIR}/lets_encrypt.conf ${NGINX_CONTAINER}:/etc/nginx/conf.d/lets_encrypt.conf
+docker exec ${NGINX_CONTAINER} /usr/sbin/nginx -s reload
 sleep 5s
 cd ${LE_DIR}
 
+echo ""
+echo "CERTS: ${REPO_DIR}/${CERTS}"
+echo "CERTS_DATA: ${REPO_DIR}/${CERTS_DATA}"
+echo ""
+
 docker run -it --rm \
-    -v ${CERTS}:/etc/letsencrypt \
-    -v ${CERTS_DATA}:/data/letsencrypt \
+    -v ${REPO_DIR}/${CERTS}:/etc/letsencrypt \
+    -v ${REPO_DIR}/${CERTS_DATA}:/data/letsencrypt \
     certbot/certbot \
     certonly \
     --webroot --webroot-path=/data/letsencrypt \
-    -d ${FQDN_OR_IP} -d www.${FQDN_OR_IP}
+    -d dev.${FQDN_OR_IP} -d www.dev.${FQDN_OR_IP} -d booking.${FQDN_OR_IP} -d quizz.${FQDN_OR_IP}
 
 cd ${REPO_DIR}
 docker-compose stop
 docker-compose rm -f
 
 # reset default.conf if it was changed
-if [ -e ${REPO_DIR}/nginx/default.conf.waitforletsencrypt ]; then
-  mv ${REPO_DIR}/nginx/default.conf.waitforletsencrypt ${REPO_DIR}/nginx/default.conf
+if [ -e ${REPO_DIR}/.config/nginx/default.conf.waitforletsencrypt ]; then
+  mv ${REPO_DIR}/.config/nginx/default.conf.waitforletsencrypt ${REPO_DIR}/.config/nginx/default.conf
+  mv ${REPO_DIR}/.config/nginx/default.conf.waitforletsencrypt ${REPO_DIR}/.config/nginx/default.conf
 fi
 
 cd ${LE_DIR}

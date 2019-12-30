@@ -36,7 +36,7 @@ services:
     networks:
     - internal
     volumes:
-    - ./.config/php/conf.ini:/usr/local/etc/php/conf.d/conf.ini
+    # - ./.config/php/conf.ini:/usr/local/etc/php/conf.d/conf.ini
     - ./shared/www:/var/www/html
     environment:
     - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME:-wordpress}
@@ -69,6 +69,7 @@ services:
     - MYSQL_PASSWORD=${MYSQL_PASSWORD:-password}
     - MYSQL_DATABASE=${MYSQL_DATABASE:-wordpress}
     restart: always
+    command: --max_allowed_packet=32505856 # Set max_allowed_packet to 256M (or any other value)
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -149,7 +150,7 @@ services:
   memcached:
     image: memcached:alpine
     container_name: ${NAMESPACE}_memcached 
-    restart: always
+    # restart: always
     ports:
     - "11211:11211"
     networks:
