@@ -184,16 +184,42 @@ services:
     - internal    
     - web
 
-  # tests:
-  #  image: tests:alpine3.11
-  #  build: tests
-  #  container_name: ${NAMESPACE}_tests 
-  #  depends_on:
-  #  - redis
-  #  - memcached
-  #  networks:
-  #  - internal    
-  #  - web
+  sftp:
+    image: delfer/alpine-ftp-server
+    container_name: ${NAMESPACE}_sftp
+    ports:
+    - "21:21"
+    - "21000-21010:21000-21010"
+    volumes:
+    - ./shared/www:/var/www/html
+    environment:
+      USERS: eedamaftp|password|/var/www/html|10000 
+      ADDRESS: sftp.eedama.org
+      MIN_PORT: 21000
+      MAX_PORT: 21010
+
+  # sftp:
+  #   image: atmoz/sftp:alpine
+  #   ports:
+  #   - "2222:22"
+  #   volumes:
+  #   - app:/var/www/html
+  #   command: eedamaftp:password:1000
+
+  tests:
+    image: tests:alpine3.11
+    build: tests
+    container_name: ${NAMESPACE}_tests 
+    depends_on:
+    - redis
+    - memcached
+    - varnish
+    links:
+    - memcached
+    - redis
+    - varnish
+    networks:
+    - internal
 
   portainer:
     image: portainer/portainer

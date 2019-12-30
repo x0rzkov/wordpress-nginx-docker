@@ -1,6 +1,6 @@
 <?php
 if (class_exists('Memcache')) {
-    $server = 'localhost';
+    $server = 'memcache';
     if (!empty($_REQUEST['server'])) {
         $server = $_REQUEST['server'];
     }

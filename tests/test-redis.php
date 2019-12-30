@@ -1,15 +1,21 @@
 <?php
-
-$cfg_host = 'localhost' ;
-$cfg_port = '6379' ; // or 0 if use socket
-$cfg_pswd = '' ; // Set if has
-$cfg_db = 0 ;
-
-
-$conn = new Redis() ;
-$conn->connect( $cfg_host, $cfg_port ) ;
-if ( $cfg_pswd ) $conn->auth( $cfg_pswd ) ;
-if ( $cfg_db ) $conn->select( $cfg_db ) ;
-
-var_dump( $this->_conn->ping() ) ; // Should give a `+PONG`
-?>
+define('TEST_KEY', 'are_we_glued');
+$redis = new Redis();
+try {
+    $redis->connect('redis', 6379);
+    $redis->set(TEST_KEY, 'yes');
+    $glueStatus = $redis->get(TEST_KEY);
+    if ($glueStatus) {
+        $testKey = TEST_KEY;
+        echo "Glued with the Redis key value store:" . PHP_EOL;
+        echo "1. Got value '{$glueStatus}' for key '{$testKey}'." . PHP_EOL;
+        if ($redis->delete(TEST_KEY)) {
+            echo "2. And already removed the key/value pair again." . PHP_EOL;
+        }
+    } else {
+        echo "Not glued with the Redis key value store." . PHP_EOL;
+    }
+} catch (RedisException $e) {
+    $exceptionMessage = $e->getMessage();
+    echo "{$exceptionMessage}. Not glued with the Redis key value store." . PHP_EOL;
+}
