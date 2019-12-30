@@ -36,7 +36,7 @@ services:
     networks:
     - internal
     volumes:
-    # - ./.config/php/conf.ini:/usr/local/etc/php/conf.d/conf.ini
+    - ./.config/php/conf.ini:/usr/local/etc/php/conf.d/conf.ini
     - ./shared/www:/var/www/html
     environment:
     - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME:-wordpress}
