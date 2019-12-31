@@ -70,7 +70,7 @@ services:
     - MYSQL_PASSWORD=${MYSQL_PASSWORD:-password}
     - MYSQL_DATABASE=${MYSQL_DATABASE:-wordpress}
     restart: always
-    command: --max_allowed_packet=32505856 # Set max_allowed_packet to 256M (or any other value)
+    command: --max_allowed_packet=65011712 # Set max_allowed_packet to 512M (or any other value)
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
