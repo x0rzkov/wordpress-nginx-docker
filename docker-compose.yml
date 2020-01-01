@@ -277,7 +277,7 @@ services:
 
   tests:
     image: tests:alpine3.11
-    build: tests
+    build: .docker/tests
     container_name: ${NAMESPACE}_tests 
     depends_on:
     - redis
