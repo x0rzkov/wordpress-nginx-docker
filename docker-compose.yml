@@ -159,6 +159,7 @@ services:
     networks:
     - internal
     - web
+    command: -m 1024
 
   varnish:
     image: million12/varnish
@@ -201,12 +202,45 @@ services:
       MIN_PORT: 21000
       MAX_PORT: 21010
 
+  portainer:
+    image: portainer/portainer
+    container_name: ${NAMESPACE}_portainer
+    restart: always
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    - portainer-data:/data
+    ports:
+    - 9001:9000
+    labels:
+    - "traefik.backend=portainer"
+    - "traefik.frontend.rule=Host:portainer.eedana.org"
+    - "traefik.enable=true"
+    - "traefik.port=9000"
+    - "traefik.tags=ui"
+    command: --no-analytics --no-auth -H unix:///var/run/docker.sock
+    networks:
+    - internal
+    - web
+
+  #coredns: 
+  #  image: coredns/coredns
+  #  container_name: ${NAMESPACE}_coredns
+  #  restart: always
+  #  command: -conf /etc/coredns/Corefile
+  #  ports:
+  #  - 53:53/udp
+  #  volumes:
+  #  - .config/dns/:/etc/coredns
+  #  labels:
+  #  - "traefik.enable=false"      
+  #  network_mode: host 
+
   unbound-app:
     container_name: ${NAMESPACE}_unbound  
     restart: always
     image: tiredofit/unbound
     ports:
-    - 53:53
+    - 153:53
     environment:
     - ZABBIX_HOSTNAME=unbound-hostname-app
     - DO_IPV6=yes
@@ -255,18 +289,6 @@ services:
     - varnish
     networks:
     - internal
-
-  portainer:
-    image: portainer/portainer
-    container_name: "${NAMESPACE}_portainer"
-    command: --no-auth -H unix:///var/run/docker.sock
-    volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
-    labels:
-    - "traefik.http.routers.${NAMESPACE}_portainer.rule=Host(`portainer.${PROJECT_BASE_URL}`)"
-    networks:
-    - internal
-    - web
 
   traefik:
     image: traefik:v2.0
@@ -339,6 +361,7 @@ networks:
 volumes:
   db-data:
   letsencrypt_certs:
+  portainer-data:
   letsencrypt_www:
   elastic_data:
   app_data:

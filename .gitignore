@@ -14,4 +14,5 @@ wp-config.php
 backup/*
 .htpasswd
 shared/www
+!shared/www/wp-content/plugins
 shared/backup

@@ -1,10 +1,10 @@
-FROM alpine:3.9
+FROM alpine:3.11
 
 COPY GeoLite2-Country.mmdb /usr/share/geoip/
 
 # Install libmaxminddb and ngx_http_geoip2_module
 
-ENV MAXMIND_VERSION=1.2.1
+ENV MAXMIND_VERSION=1.4.2
 
 RUN set -x \
   && apk add --no-cache --virtual .build-deps \
@@ -26,7 +26,7 @@ RUN ldconfig || :
 
 # Install nginx
 
-ENV NGINX_VERSION 1.15.11
+ENV NGINX_VERSION 1.17.7
 
 RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& CONFIG="\
