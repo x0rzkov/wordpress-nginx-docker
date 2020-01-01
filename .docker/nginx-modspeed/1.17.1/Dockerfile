@@ -42,7 +42,7 @@ RUN set -xe; \
         -j$(getconf _NPROCESSORS_ONLN) \
         -c advice.detachedHead=false \
         https://github.com/apache/incubator-pagespeed-mod.git mod_pagespeed; \
-    git clone -b ${MOD_PAGESPEED_VERSION}-stable \
+    git clone  \
         --recurse-submodules \
         --shallow-submodules \
         --depth=1 \

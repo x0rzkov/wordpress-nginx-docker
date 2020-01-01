@@ -7,7 +7,11 @@ services:
   # - 
 
   nginx:
-    build: .docker/nginx-modspeed/1.17.1
+    # build: .docker/nginx-brotli-modsecurity-alpine
+    # build: .docker/nginx-pagespeed2
+    # build: .docker/nginx-pagespeed/stable/edge/nginx-mainline
+    # build: .docker/nginx-modspeed/1.17.1
+    image: pagespeed/nginx-pagespeed:edge
     # image: nginx:${NGINX_VERSION:-latest}
     container_name: ${NAMESPACE}_nginx
     ports:
