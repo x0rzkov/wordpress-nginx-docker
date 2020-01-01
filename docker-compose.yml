@@ -20,6 +20,8 @@ services:
     - wordpress:wordpress
     - adminer:adminer
     - phpmyadmin:phpmyadmin
+    - kibana:kibana
+    - elasticsearch:elasticsearch
     volumes:
     - ${NGINX_CONF_DIR:-./nginx}:/etc/nginx/conf.d
     - ${NGINX_LOG_DIR:-./logs/nginx}:/var/log/nginx
@@ -200,7 +202,7 @@ services:
       MAX_PORT: 21010
 
   unbound-app:
-    container_name: unbound-app
+    container_name: ${NAMESPACE}_unbound  
     restart: always
     image: tiredofit/unbound
     ports:
@@ -262,6 +264,9 @@ services:
     - /var/run/docker.sock:/var/run/docker.sock
     labels:
     - "traefik.http.routers.${NAMESPACE}_portainer.rule=Host(`portainer.${PROJECT_BASE_URL}`)"
+    networks:
+    - internal
+    - web
 
   traefik:
     image: traefik:v2.0
@@ -269,9 +274,13 @@ services:
     command: --api.insecure=true --providers.docker
     ports:
     - '8000:80'
+    - '8443:443'
     - '8085:8080' # Dashboard
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+    - internal
+    - web
 
   elasticsearch:
     build:
@@ -290,6 +299,7 @@ services:
     ports:
     - '9200:9200'
     - '8086:8086'
+    - '9000:9000'
     ulimits:
       memlock:
         soft: -1
@@ -299,6 +309,24 @@ services:
     networks:
     - internal
     - web
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.5.0
+    container_name: ${NAMESPACE}_kibana
+    ports:
+    - 5601:5601
+    networks:
+    - internal
+    - web
+
+  tor-privoxy:
+    restart: always
+    container_name: ${NAMESPACE}_torp
+    image: dockage/tor-privoxy:latest
+    ports:
+    - "9050:9050" # Tor proxy
+    - "9051:9051" # Tor control port
+    - "8118:8118" # Privoxy
 
 networks:
   internal:

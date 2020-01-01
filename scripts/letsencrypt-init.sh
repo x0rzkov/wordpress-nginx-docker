@@ -111,7 +111,8 @@ docker run -it --rm \
     -d dev.${FQDN_OR_IP} -d www.dev.${FQDN_OR_IP} -d booking.${FQDN_OR_IP} -d quizz.${FQDN_OR_IP} \
     -d staging.${FQDN_OR_IP} -d pma.${FQDN_OR_IP} -d adminer.${FQDN_OR_IP} -d elastic.${FQDN_OR_IP} \
     -d mailhog.${FQDN_OR_IP} -d traefik.${FQDN_OR_IP} -d cerbero.${FQDN_OR_IP} -d stats.${FQDN_OR_IP} \
-    -d www.${FQDN_OR_IP} -d ${FQDN_OR_IP}
+    -d www.${FQDN_OR_IP} -d ${FQDN_OR_IP} -d assets.${FQDN_OR_IP} -d kibana.${FQDN_OR_IP} -d nginx.${FQDN_OR_IP} \
+    -d cerebro.${FQDN_OR_IP}
 
 cd ${REPO_DIR}
 docker-compose stop
