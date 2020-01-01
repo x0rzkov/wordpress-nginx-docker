@@ -7,7 +7,8 @@ services:
   # - 
 
   nginx:
-    image: nginx:${NGINX_VERSION:-latest}
+    build: .docker/nginx-modspeed/1.17.1
+    # image: nginx:${NGINX_VERSION:-latest}
     container_name: ${NAMESPACE}_nginx
     ports:
     - "8080:80"
