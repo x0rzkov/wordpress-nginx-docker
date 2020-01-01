@@ -305,6 +305,11 @@ services:
     - web
 
   elasticsearch:
+    #restart: unless-stopped
+    #environment:
+    #  - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    # mem_limit: 2g
+    # memswap_limit: 2g
     build:
       context: ./.docker/elasticsearch
       args:
@@ -326,11 +331,17 @@ services:
       memlock:
         soft: -1
         hard: -1
+      #nofile:
+      #  soft: 65536
+      #  hard: 65536
+    #cap_add:
+    #  - IPC_LOCK
     volumes:
     - elastic_data:/usr/share/elasticsearch/data
     networks:
     - internal
     - web
+    entrypoint: /usr/share/elasticsearch/start
 
   kibana:
     image: docker.elastic.co/kibana/kibana:7.5.0
@@ -350,6 +361,20 @@ services:
     - "9051:9051" # Tor control port
     - "8118:8118" # Privoxy
 
+  imaginary:
+    image: h2non/imaginary:latest
+    container_name: ${NAMESPACE}_imaginary
+    volumes:
+    - imaginary-data:/mnt/data
+    environment:
+       PORT: 9002
+    ports:
+    - "9002:9002"
+    command: -cors -gzip -enable-url-source -mount /mnt/data
+    networks:
+    - internal
+    - web
+
 networks:
   internal:
   web:
@@ -361,6 +386,7 @@ networks:
 volumes:
   db-data:
   letsencrypt_certs:
+  imaginary-data:
   portainer-data:
   letsencrypt_www:
   elastic_data:
