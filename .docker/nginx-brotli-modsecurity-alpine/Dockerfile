@@ -36,7 +36,7 @@
 FROM alpine:latest
 
 # Environment variables to store version numbers
-ENV NGINX_VERSION 1.14.2
+ENV NGINX_VERSION 1.17.7
 ENV OPENSSL_VERSION 1.1.1a
 
 # Arguments to be added while configuring Nginx
@@ -182,7 +182,7 @@ RUN CONFIG="\
 	&& install -m755 objs/ngx_http_geoip_module-debug.so /usr/lib/nginx/modules/ngx_http_geoip_module-debug.so \
 	&& install -m755 objs/ngx_stream_geoip_module-debug.so /usr/lib/nginx/modules/ngx_stream_geoip_module-debug.so \
 	&& install -m755 objs/ngx_http_modsecurity_module.so /usr/lib/nginx/modules/ngx_http_modsecurity_module.so ; \
-	# ln -s ../../usr/lib/nginx/modules /etc/nginx/modules \
+	ln -s ../../usr/lib/nginx/modules /etc/nginx/modules \
 	strip /usr/sbin/nginx* \
 	&& strip /usr/lib/nginx/modules/*.so \
 	&& cd /usr/src \
