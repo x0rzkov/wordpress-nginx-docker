@@ -32,7 +32,7 @@ RUN git clone -b ${MOD_PAGESPEED_TAG} \
               --depth=1 \
               -c advice.detachedHead=false \
               -j`nproc` \
-              https://github.com/apache/incubator-pagespeed-mod.git \
+              https://github.com/x0rzkov/incubator-pagespeed-mod.git \
               modpagespeed \
     ;
 

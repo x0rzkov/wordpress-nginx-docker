@@ -3,7 +3,7 @@ FROM alpine:3.11
 MAINTAINER NGINX Docker Maintainers "info@romanoffstudio.me"
 
 ENV TZ Europe/Kiev
-ENV NGINX_VERSION 1.17.6
+ENV NGINX_VERSION 1.17.7
 ENV LUA_MODULE_VERSION 0.10.13
 ENV DEVEL_KIT_MODULE_VERSION 0.3.0
 ENV LUAJIT_LIB=/usr/lib
@@ -98,8 +98,6 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& curl -fSL https://github.com/openresty/headers-more-nginx-module/archive/v$HEADERS_MORE_VERSION.tar.gz -o headers-more-nginx-module-$HEADERS_MORE_MODULE_PATH.tar.gz \
 	&& sha512sum nginx.tar.gz nginx.tar.gz.asc \
 	&& export GNUPGHOME="$(mktemp -d)" \
-	&& gpg --keyserver ipv4.pool.sks-keyservers.net --recv-keys "$GPG_KEYS" \
-	&& gpg --batch --verify nginx.tar.gz.asc nginx.tar.gz \
 	&& rm -rf "$GNUPGHOME" nginx.tar.gz.asc \
 	&& mkdir -p /usr/src \
 	&& tar -zxC /usr/src -f nginx.tar.gz \

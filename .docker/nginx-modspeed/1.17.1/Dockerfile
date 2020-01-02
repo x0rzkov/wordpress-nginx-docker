@@ -2,7 +2,8 @@ FROM alpine:3.11
 
 # Build arguments.
 ARG NGINX_VERSION="1.17.7"
-ARG MOD_PAGESPEED_VERSION="v1.13.35.2"
+ARG MOD_PAGESPEED_VERSION="v1.13.35.2a"
+# ARG MOD_PAGESPEED_VERSION="master"
 
 # Copy our build assets.
 COPY ./build-assets/ /
@@ -41,14 +42,14 @@ RUN set -xe; \
         --depth=1 \
         -j$(getconf _NPROCESSORS_ONLN) \
         -c advice.detachedHead=false \
-        https://github.com/apache/incubator-pagespeed-mod.git mod_pagespeed; \
+        https://github.com/x0rzkov/incubator-pagespeed-mod.git mod_pagespeed; \
     git clone  \
         --recurse-submodules \
         --shallow-submodules \
         --depth=1 \
         -c advice.detachedHead=false \
         -j$(getconf _NPROCESSORS_ONLN) \
-        https://github.com/apache/incubator-pagespeed-ngx.git \
+        https://github.com/x0rzkov/incubator-pagespeed-ngx.git \
         ngxpagespeed; \
     # Patch pagespeed
     cd /usr/src/mod_pagespeed; \
