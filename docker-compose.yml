@@ -11,8 +11,8 @@ services:
     # build: .docker/nginx-pagespeed2
     # build: .docker/nginx-pagespeed/stable/edge/nginx-mainline
     # build: .docker/nginx-modspeed/1.17.1
-    # image: pagespeed/nginx-pagespeed:edge
-    image: nginx:alpine
+    image: pagespeed/nginx-pagespeed:edge
+    # image: nginx:alpine
     container_name: ${NAMESPACE}_nginx
     ports:
     - "8080:80"
@@ -61,6 +61,7 @@ services:
     - elasticsearch
     links:
     - memcached:memcached
+    - redis:redis
     - elasticsearch:elasticsearch
     restart: always
 
@@ -166,7 +167,6 @@ services:
     - "11211:11211"
     networks:
     - internal
-    - web
     command: -m 1024
 
   varnish:
@@ -184,7 +184,6 @@ services:
     # - "443:443"
     networks:
     - internal
-    - web
 
   redis:
     image: redis:5-alpine
@@ -193,8 +192,7 @@ services:
     ports:
     - "6379:6379"
     networks:
-    - internal    
-    - web
+    - internal
 
   sftp:
     image: delfer/alpine-ftp-server
