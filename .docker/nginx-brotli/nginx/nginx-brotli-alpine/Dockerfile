@@ -41,7 +41,7 @@ LABEL maintainer="Harsha Vardhan J" \
       version="1.0"
 
 # Environment variables to store version numbers of Nginx and OpenSSL
-ENV NGINX_VERSION 1.14.2
+ENV NGINX_VERSION 1.17.7
 ENV OPENSSL_VERSION 1.1.1a
 
 RUN CONFIG="\
@@ -181,10 +181,9 @@ RUN CONFIG="\
 	# Bring in tzdata so users could set the timezones through the environment
 	# variables
 	&& apk add --no-cache tzdata \
-	\
-	# forward request and error logs to docker log collector
-	&& ln -sf /dev/stdout /var/log/nginx/access.log \
-	&& ln -sf /dev/stderr /var/log/nginx/error.log
+	&& mkdir -p /var/log/nginx/
+
+RUN chown -Rf nginx:nginx /var/log/nginx/ && chmod -Rf 755 /var/log/nginx/
 
 # Running as user 'nginx'
 USER nginx
