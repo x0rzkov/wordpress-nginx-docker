@@ -2,18 +2,9 @@
 version: "3.7"
 services:
 
-  # refs.
-  # - https://github.com/yobasystems/alpine-php-wordpress
-  # - 
-
   nginx:
-    # build: .docker/nginx-brotli-modsecurity-alpine
-    # build: .docker/nginx-pagespeed2
-    # build: .docker/nginx-pagespeed/stable/edge/nginx-mainline
-    # build: .docker/nginx-modspeed/1.17.1
-    # image: pagespeed/nginx-pagespeed:edge
-    # image: nginx:alpine
     image: nginx-rs:latest
+    build: .docker/nginx-rs
     container_name: ${NAMESPACE}_nginx
     ports:
     - "8080:80"
@@ -35,7 +26,8 @@ services:
     - ${SSL_CERTS_DIR:-./certs}:/etc/letsencrypt
     - ${SSL_CERTS_DATA_DIR:-./certs-data}:/data/letsencrypt
     - .htpasswd:/etc/nginx/htpasswd/.htpasswd
-    - php_socket:/var/run/php/fpm.sock:ro
+    - ./data/nginx/geoip2/:/usr/share/geoip/
+    - ./.config/nginx-conf/nginx.conf:/etc/nginx/nginx.conf
     restart: always
 
   wordpress:
@@ -48,7 +40,6 @@ services:
     volumes:
     - ./.config/php/conf.ini:/usr/local/etc/php/conf.d/conf.ini
     - ./shared/www:/var/www/html
-    - php_socket:/var/run/php/fpm.sock
     - ./.config/php-fpm/custom.conf:/usr/local/etc/php-fpm.d/www.conf
     environment:
     - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME:-wordpress}
@@ -387,7 +378,6 @@ networks:
 volumes:
   db-data:
   letsencrypt_certs:
-  php_socket:
   imaginary-data:
   portainer-data:
   letsencrypt_www:

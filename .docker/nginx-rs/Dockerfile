@@ -8,9 +8,28 @@ ENV LUA_MODULE_VERSION 0.10.13
 ENV DEVEL_KIT_MODULE_VERSION 0.3.0
 ENV LUAJIT_LIB=/usr/lib
 ENV LUAJIT_INC=/usr/include/luajit-2.1
+ENV MAXMIND_VERSION=1.4.2
 ENV NGX_BROTLI_COMMIT e505dce68acc190cc5a1e780a3b0275e39f160ca
 # https://github.com/openresty/headers-more-nginx-module/releases
 ENV HEADERS_MORE_VERSION=0.33
+
+RUN set -x \
+  && apk add --no-cache --virtual .build-deps \
+    alpine-sdk \
+    perl \
+  && git clone https://github.com/leev/ngx_http_geoip2_module /ngx_http_geoip2_module \
+  && wget https://github.com/maxmind/libmaxminddb/releases/download/${MAXMIND_VERSION}/libmaxminddb-${MAXMIND_VERSION}.tar.gz \
+  && tar xf libmaxminddb-${MAXMIND_VERSION}.tar.gz \
+  && cd libmaxminddb-${MAXMIND_VERSION} \
+  && ./configure \
+  && make \
+  && make check \
+  && make install \
+  && apk del .build-deps
+
+# TODO fix issue with non zero return code
+
+RUN ldconfig || :
 
 RUN GPG_KEYS=a \
 	&& CONFIG="\
@@ -55,10 +74,12 @@ RUN GPG_KEYS=a \
 		--with-file-aio \
 		--with-http_v2_module \
 		--with-ipv6 \
+		--add-dynamic-module=/ngx_http_geoip2_module \
 		--add-module=/usr/src/ngx_devel_kit-$DEVEL_KIT_MODULE_VERSION \
     	--add-module=/usr/src/lua-nginx-module-$LUA_MODULE_VERSION \
     	--add-module=/usr/src/ngx_brotli \
     	--add-module=/usr/src/headers-more-nginx-module-$HEADERS_MORE_VERSION \
+
         --with-cc-opt=-Wno-error \
 	" \
 	&& addgroup -S nginx \
